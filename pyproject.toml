@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "cglcalc"
+version = "0.1.0"
+description = ""
+authors = ["eedeidk <59429783+eedeidk@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+beautifulsoup4 = "^4.12.2"
+ua-generator = "^0.1.8"
+requests = "^2.31.0"
+lxml = "^4.9.3"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.25.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
