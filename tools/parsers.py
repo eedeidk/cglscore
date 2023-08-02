@@ -1,15 +1,24 @@
 from bs4 import BeautifulSoup as bs
 
 class Parseme:
-	def __init__(self, resp:str) -> None:
+	def __init__(self, resp:str, pos:2, neg:0.5) -> None:
 		self.soup = bs(resp, 'lxml')
+		self.answer_column = None
+		self.sq_pos = pos
+		self.sq_neg = neg
 	
 	def parse1(self):
 		self.ci_cont = self.soup.find('div', class_='main-info-pnl')
-		self.ci_info = self.ci_cont.find('tbody')
+		if self.ci_cont:
+			self.ci_info = self.ci_cont.find('tbody')
+		else:
+			self.ci_info = None
 		self.response_area = self.soup.find('div', class_='grp-cntnr')
 	
 	def candi_info(self):
+		if not self.ci_info:
+			print('No candidate info present')
+			return None
 		table = self.ci_info
 		# Initialize an empty dictionary
 		self.data_dict = {}
@@ -47,15 +56,48 @@ class Parseme:
 		# section info:
 		label = section.find('div', class_='section-lbl').get_text(strip=True)
 		questions = section.find_all('div', class_='question-pnl')
-		c = {
-			'r': 0,
-			'w': 0,
-			'u': 0
-			}
+		c = {'r': 0,'w': 0,'u': 0}
+		# some scorecard does not show questions:
+		if len(questions)==0:
+			# question not present type:
+			table = section.find('table')
+			if table:
+				headers = table.thead.find_all('th')
+				##
+				if not self.answer_column:
+					#
+					a = ''
+					for each in headers:
+						a+= each.get_text(strip=True)+'||'
+					print(f'Rows:\n{a}')
+					self.answer_column = int(input('Which one is answer column: '))
+					self.response_column = int(input('Which one is response column: '))
+				##
+				qs = table.tbody.find_all('tr')
+				for q in qs:
+					a = self.parse_qnp(q)
+					c[a] += 1
+			else:
+				raise ValueError('This website is not supported kindly'
+				'submit scorecard url to Issue section of https://github.com/eedeidk/cglscore')
 		for q in questions:
 			a = self.parse_question(q)
 			c[a] += 1
 		return c, label
+	
+	def parse_qnp(self, q:bs):
+		cq = q.find_all('td')
+		aq = cq[self.answer_column-1].get_text(strip=True)
+		rq = cq[self.response_column-1].get_text(strip=True)
+		## score logic:
+		if rq == aq:
+			t = 'r'
+		elif rq.isdigit():
+			t = 'w'
+		else:
+			t = 'u'
+		return t
+
 	
 	def parse_question(self, q:bs):
 		# generate score:
@@ -81,7 +123,7 @@ class Parseme:
 
 	def score_card(self,v:dict, n:str):
 		# final calc
-		sq_total = v['r']*2 - v['w']*0.3333
+		sq_total = v['r']*self.sq_pos - v['w']*self.sq_neg
 		sq_acc = v['r']/(v['r']+v['w'])*100
 		toprint = f'''{n}
 		Score: {sq_total}, Accuracy: {sq_acc}
