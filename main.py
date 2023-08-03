@@ -14,6 +14,7 @@ if not exam.lower() == 'y':
     n = float(input('Negative Marks: '))
     if n<0:
         n=n*(-1)
-Parseme(resp=resp, pos=p, neg=n).main()
-
+    Parseme(resp=resp, pos=p, neg=n).main()
+else:
+    Parseme(resp=resp, pos=2, neg=float(0.5)).main()
 print(f'For improvements/suggestions {softinfo}')
